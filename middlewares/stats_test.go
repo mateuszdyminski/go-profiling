@@ -1,11 +1,11 @@
 package middlewares
 
 import (
-	"net/http"
-	"testing"
-	"net/http/httptest"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestStats(t *testing.T) {
@@ -22,14 +22,13 @@ func TestStats(t *testing.T) {
 	fmt.Printf("%d - %s", w.Code, w.Body.String())
 }
 
-
 func TestClientVersion(t *testing.T) {
-	testCases := map[string]int {
-		"application/vnd.app.v2+json" : 2,
-		"application/vnd.app.v1" : 1,
-		"application/wrong" : 3,
-		"wrong" : 3,
-		"" : 3,
+	testCases := map[string]int{
+		"application/vnd.app.v2+json": 3,
+		"application/vnd.app.v1":      1,
+		"application/wrong":           3,
+		"wrong":                       3,
+		"":                            3,
 	}
 
 	for k, v := range testCases {
@@ -44,5 +43,14 @@ func TestClientVersion(t *testing.T) {
 		if version != v {
 			t.Errorf("wrong client version. should be: %d, is: %d", v, version)
 		}
+	}
+}
+
+func BenchmarkClientVersion(b *testing.B) {
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+	req.Header.Set("Accept", "application/vnd.app.v6")
+
+	for i := 0; i < b.N; i++ {
+		clientVersion(req)
 	}
 }

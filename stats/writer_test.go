@@ -43,3 +43,15 @@ func TestAddTagsToName(t *testing.T) {
 	}
 }
 
+func BenchmarkAddTagsToName(b *testing.B) {
+	tags := map[string]string{
+		"endpoint": "hello",
+		"os":       "OS X",
+		"browser":  "Chrome",
+		"host":     "myhost",
+	}
+
+	for i := 0; i < b.N; i++ {
+		addTagsToName("name", tags)
+	}
+}

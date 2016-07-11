@@ -8,8 +8,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/mateuszdyminski/go-profiling/middlewares"
 	"github.com/mateuszdyminski/go-profiling/handlers"
+	"github.com/mateuszdyminski/go-profiling/middlewares"
 )
 
 const hostPort = ":9090"

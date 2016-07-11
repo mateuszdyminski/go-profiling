@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,10 +17,13 @@ import (
 const defaultVersion = 3
 
 // acceptVersions list supported REST client versions
-var acceptVersions = []string{
-	"vnd.app.v1",
-	"vnd.app.v2",
-	"vnd.app.v3",
+var acceptVersions = map[string]int{
+	"vnd.app.v1": 1,
+	"vnd.app.v2": 2,
+	"vnd.app.v3": 3,
+	"vnd.app.v4": 4,
+	"vnd.app.v5": 5,
+	"vnd.app.v6": 6,
 }
 
 func WithStats(h http.HandlerFunc) http.HandlerFunc {
@@ -36,14 +38,16 @@ func WithStats(h http.HandlerFunc) http.HandlerFunc {
 		// run endpoint here
 		h(responseStatistics, r)
 
+		// store statistics
 		stats.IncCounter(fmt.Sprintf("handler.httpCode.%d", responseStatistics.httpCode), tags, 1)
 
 		stats.IncCounter(fmt.Sprintf("handler.apiVersion.%d", clientVersion(r)), tags, 1)
 
-		duration := time.Since(start)
-		stats.RecordTimer("handler.latency", tags, duration)
+		stats.RecordTimer("handler.latency", tags, time.Since(start))
 	}
 }
+
+var hostname = getHostname()
 
 func getStatsTags(r *http.Request) map[string]string {
 	userBrowser, userOS := parseUserAgent(r.UserAgent())
@@ -51,15 +55,21 @@ func getStatsTags(r *http.Request) map[string]string {
 		"browser":  userBrowser,
 		"os":       userOS,
 		"endpoint": filepath.Base(r.URL.Path),
+		"host":     hostname,
 	}
+
+	return stats
+}
+
+func getHostname() string {
 	host, err := os.Hostname()
 	if err == nil {
 		if idx := strings.IndexByte(host, '.'); idx > 0 {
 			host = host[:idx]
 		}
-		stats["host"] = host
 	}
-	return stats
+
+	return host
 }
 
 func parseUserAgent(uaString string) (browser, os string) {
@@ -76,40 +86,17 @@ func parseUserAgent(uaString string) (browser, os string) {
 }
 
 // acceptedVersion checks Accept header in request to parse API version.
-// sample header application/vnd.app.v2+json
+// sample header application/vnd.app.v2
 func clientVersion(req *http.Request) int {
 	a := strings.Split(req.Header.Get("Accept"), "/")
-	var v string
-	if len(a) > 1 {
-		versionAndType := strings.Split(a[1], "+")
-
-		v = versionAndType[0]
-		if len(versionAndType) > 1 {
-			req.Header.Set("X-Version", strconv.Itoa(version(v)))
-			req.Header.Set("X-Content", versionAndType[1])
-		}
-	}
-
-	return version(v)
-}
-
-func version(v string) int {
-	found := false
-	for _, ver := range acceptVersions {
-		if ver == v {
-			found = true
-			break
-		}
-	}
-
-	if !found {
+	if len(a) < 2 {
 		return defaultVersion
 	}
 
-	ver, err := strconv.Atoi(v[9:])
-	if err != nil {
+	val, ok := acceptVersions[a[1]]
+	if !ok {
 		return defaultVersion
 	}
 
-	return ver
+	return val
 }
