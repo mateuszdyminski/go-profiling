@@ -2,7 +2,7 @@
 
 Go profiling example
 
-Master branch = http handler after the go optimizations
+There are 2 branches:
 
-Have a look at `'Slow' branch to find out the go code before them.
-
+- master - go code after the optimizations
+- slow - old slow version before the optimizations
