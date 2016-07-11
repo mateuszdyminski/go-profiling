@@ -1,0 +1,92 @@
+Go Profiling and optimization
+
+Mateusz Dymiński
+@m_dyminski
+github.com/mateuszdyminski/go-profiling
+
+* Agenda
+
+- Profiling
+- How we can start profiling our app
+- Analyzing profiles
+- Go-torch tool
+- Let's profile some app - demo
+- Commands
+- Summary
+
+
+* Go profiling
+
+Available by tool *pprof*
+
+Go has powerful profiling built in to the runtime
+- CPU profiles (stack sampling)
+- Heap profiles using allocation profiling
+- and more (block profiles, traces, etc)
+
+
+Great article
+https://blog.golang.org/profiling-go-programs
+
+* Ways to get started with Go profiling
+
+- Through tests and benchmarks, using the -cpuprofile and -memprofile flags. Build a profile for a benchmark: go test . -bench . -cpuprofile prof.cpu Then analyze the profile:
+
+	go tool pprof [binary] prof.cpu
+
+- import _ net/http/pprof to add /debug/pprof endpoints in your service. Start the profile and analyze the results directly:
+
+	go tool pprof -seconds 5 http://localhost:9090/debug/pprof/profile
+
+- Start the profile from code by calling runtime.StartCPUProfile or runtime.WriteHeapProfile
+
+These profiles are analyzed using go tool pprof
+
+* Analyzing profiles - CLI
+
+	go tool pprof stats.test prof.cpu
+
+.image go-profiling/pprof.png _ 1000
+
+* Analyzing profiles - Web or SVG
+
+	in pprof tool: web
+
+.image go-profiling/pprof_web.png _ 600
+
+* Analyzing profiles - Go-torch
+
+Great tool to vizualize *.prof files. Created by Uber
+
+https://github.com/uber/go-torch
+
+.image go-profiling/meta.svg _ 1000
+
+* Go profiling demo
+
+* Commands
+
+Default pprof endpoint: http://localhost:9090/debug/pprof
+
+	go tool pprof -seconds 5 http://localhost:9090/debug/pprof/profile
+
+		- top10: to show the top 10 functions by time spent only in that function
+		- top10 -cum: the top 10 functions by time spent in that function or a function it called.
+		- list regex: to show code for functions matching regex
+		- disasm regex: to show the disassembly for functions matching regex
+
+	go test -bench . -benchmem -cpuprofile prof.cpu -memprofile prof.mem
+
+	go tool pprof stats.test prof.cpu
+
+	go tool pprof -alloc_objects stats.test prof.mem
+
+	go-torch -u http://localhost:9090 --time 5
+
+	go-torch --binaryname stats.test -b prof.cpu
+
+	go build -gcflags=-m . // prints information like inlined functions, “leaks” and “escapes” (e.g. heap allocated variables)
+
+* Summary
+
+* Questions?
